@@ -129,7 +129,7 @@ class QRCodeGenerator:
         # Main title
         canvas_obj.setFillColor("#FFFFFF")
         canvas_obj.setFont("Helvetica-Bold", 32)
-        canvas_obj.drawCentredString(width/2, height - 40, "KASSA CONFIGURATIE")
+        canvas_obj.drawCentredString(width/2, height - 40, self.get_translation('cash_configuration', language))
         
         # Onboarding QR name
         canvas_obj.setFont("Helvetica-Bold", 18)
@@ -143,7 +143,7 @@ class QRCodeGenerator:
         y_pos -= 30
         canvas_obj.setFont("Helvetica-Bold", 20)
         canvas_obj.setFillColor("#1B4F72")
-        canvas_obj.drawCentredString(width/2, y_pos, 'Toestel Configuratie')
+        canvas_obj.drawCentredString(width/2, y_pos, self.get_translation('device_configuration', language))
         
         # Underline for Toestel Configuratie
         canvas_obj.setStrokeColor("#1B4F72")
@@ -173,33 +173,33 @@ class QRCodeGenerator:
         canvas_obj.setFont("Helvetica-Bold", 12)
         
         if onboarding_data['event_name']:
-            canvas_obj.drawString(info_x, info_y, f"Evenement: {onboarding_data['event_name']}")
+            canvas_obj.drawString(info_x, info_y, f"{self.get_translation('event', language)}: {onboarding_data['event_name']}")
             info_y -= 25
         
         if onboarding_data['location_name']:
-            canvas_obj.drawString(info_x, info_y, f"Locatie: {onboarding_data['location_name']}")
+            canvas_obj.drawString(info_x, info_y, f"{self.get_translation('location', language)}: {onboarding_data['location_name']}")
             info_y -= 25
         
         if onboarding_data['sales_name']:
-            canvas_obj.drawString(info_x, info_y, f"Sales: {onboarding_data['sales_name']}")
+            canvas_obj.drawString(info_x, info_y, f"{self.get_translation('sales', language)}: {onboarding_data['sales_name']}")
             info_y -= 25
         
         # Display roles from database or fallback text
-        roles_text = onboarding_data.get('rollen') or "Geen rollen gespecifieerd"
-        canvas_obj.drawString(info_x, info_y, f"Rollen: {roles_text}")
+        roles_text = onboarding_data.get('rollen') or self.get_translation('no_roles_specified', language)
+        canvas_obj.drawString(info_x, info_y, f"{self.get_translation('roles', language)}: {roles_text}")
         info_y -= 25
         
         # Display payment methods if sales role is present AND not top_up role
         roles_text = onboarding_data.get('rollen', '').lower()
         if onboarding_data.get('betaalmethodes') and 'top_up' not in roles_text:
-            canvas_obj.drawString(info_x, info_y, f"Betaalmethodes: {onboarding_data['betaalmethodes']}")
+            canvas_obj.drawString(info_x, info_y, f"{self.get_translation('payment_methods', language)}: {onboarding_data['betaalmethodes']}")
             info_y -= 25
         
         # Step 2 section - adjusted position for payment methods
         step2_y = qr_y - 90  # Moved down to accommodate payment methods
         canvas_obj.setFont("Helvetica-Bold", 20)
         canvas_obj.setFillColor("#1B4F72")
-        canvas_obj.drawCentredString(width/2, step2_y, "Installatie Instructies")
+        canvas_obj.drawCentredString(width/2, step2_y, self.get_translation('installation_instructions', language))
         
         # Underline for Installatie Instructies
         canvas_obj.setStrokeColor("#1B4F72")
@@ -214,27 +214,27 @@ class QRCodeGenerator:
         canvas_obj.setFont("Helvetica", 14)
         
         # New 7-step instructions with better spacing
-        canvas_obj.drawString(70, step2_y, "1 - Open Staffx MC")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step1', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "2 - Klik op ONBOARDING QR")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step2', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "3 - Use camera - en richt je op de bovenstaande QR code")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step3', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "4 - Login met ClientX-QR")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step4', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "5 - Open de applicatie van het evenement op jouw smartphone")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step5', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "6 - Open de Payment QR")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step6', language))
         step2_y -= 25
-        canvas_obj.drawString(70, step2_y, "7 - Scan met het kassa toestel - de QR code op jouw gsm")
+        canvas_obj.drawString(70, step2_y, self.get_translation('step7', language))
         
         # Support text - alleen tonen als WhatsApp URL beschikbaar is
         if whatsapp_url:
             canvas_obj.setFont("Helvetica-Bold", 12)
             canvas_obj.setFillColor("#1B4F72")
-            canvas_obj.drawCentredString(width/2, 70, "Heb je problemen - contacteer ons via WhatsApp")
+            canvas_obj.drawCentredString(width/2, 70, self.get_translation('whatsapp_support', language))
             canvas_obj.setFont("Helvetica", 11)
-            canvas_obj.drawCentredString(width/2, 55, "en stuur ons een video of foto van het probleem")
+            canvas_obj.drawCentredString(width/2, 55, self.get_translation('whatsapp_support_detail', language))
         
         # WhatsApp QR code rechts onderaan (als opgegeven)
         if whatsapp_url:
@@ -401,7 +401,7 @@ class QRCodeGenerator:
         # Main title - changed to KASSA CONFIGURATIE
         canvas_obj.setFillColor("#FFFFFF")
         canvas_obj.setFont("Helvetica-Bold", 32)
-        canvas_obj.drawCentredString(width/2, height - 40, "KASSA CONFIGURATIE")
+        canvas_obj.drawCentredString(width/2, height - 40, self.get_translation('cash_configuration', language))
         
         # Show onboarding name instead of "User:"
         canvas_obj.setFont("Helvetica-Bold", 18)

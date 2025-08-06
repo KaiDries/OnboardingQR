@@ -409,29 +409,29 @@ class OnboardingQRManager:
             print(f"   QR Code: {qr['qr_code']}")
             print()
     
-    def choose_template_type(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None):
-        """Choose template type and generate QR codes"""
-        print("=== Template Options ===")
-        print("1. Application Onboarding QR")
-        print("2. Guest User Onboarding QR")
+    def choose_template_type(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
+        """Kies template type en genereer QR codes"""
+        print("=== Template Opties ===")
+        print("1. Applicatie Onboarding QR")
+        print("2. Gast Gebruiker Onboarding QR")
         
         while True:
             try:
-                choice = int(input("\nSelect template type (1 or 2): "))
+                choice = int(input("\nSelecteer template type (1 of 2): "))
                 if choice in [1, 2]:
                     break
-                print("Please enter 1 or 2")
+                print("Voer 1 of 2 in")
             except ValueError:
-                print("Please enter a valid number")
+                print("Voer een geldig nummer in")
         
         if choice == 1:
-            self.generate_application_qrs(onboarding_qrs, whatsapp_url)
+            self.generate_application_qrs(onboarding_qrs, whatsapp_url, language)
         else:
-            self.generate_guest_qrs(onboarding_qrs, whatsapp_url)
+            self.generate_guest_qrs(onboarding_qrs, whatsapp_url, language)
     
-    def generate_application_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None):
-        """Generate application onboarding QR codes"""
-        print("\nGenerating Application Onboarding QR codes...")
+    def generate_application_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
+        """Genereer applicatie onboarding QR codes"""
+        print("\nGenereren van Applicatie Onboarding QR codes...")
         
         try:
             # Generate single multi-page PDF
@@ -439,22 +439,23 @@ class OnboardingQRManager:
                 onboarding_qrs, 
                 self.tenant_data['domain'],
                 self.tenant_data['tenant_id'],
-                whatsapp_url
+                whatsapp_url,
+                language=language
             )
-            print(f"✓ Generated multi-page PDF: {filename}")
-            print(f"✓ Contains {len(onboarding_qrs)} onboarding QR pages")
+            print(f"✓ Multi-page PDF gegenereerd: {filename}")
+            print(f"✓ Bevat {len(onboarding_qrs)} onboarding QR pagina's")
             if whatsapp_url:
                 print(f"✓ WhatsApp QR code toegevoegd")
             
         except Exception as e:
-            print(f"✗ Error generating multi-page QR PDF: {e}")
+            print(f"✗ Fout bij genereren multi-page QR PDF: {e}")
         
         self.db.disconnect()
     
-    def generate_guest_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None):
-        """Generate guest user onboarding QR codes"""
-        print("\nGenerating Guest User Onboarding QR codes...")
-        print("Searching for user data based on onboarding names...")
+    def generate_guest_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
+        """Genereer gast gebruiker onboarding QR codes"""
+        print("\nGenereren van Gast Gebruiker Onboarding QR codes...")
+        print("Zoeken naar gebruikersgegevens op basis van onboarding namen...")
         
         user_data_map = {}
         import_data = []
@@ -473,10 +474,10 @@ class OnboardingQRManager:
             if users:
                 # Use only the FIRST user found - één user per onboarding QR
                 selected_user = users[0]
-                print(f"✓ Found user for {qr_data['onboarding_name']}: {selected_user.get('firstname', '')} {selected_user.get('lastname', '')} ({selected_user.get('email', expected_email)})")
+                print(f"✓ Gebruiker gevonden voor {qr_data['onboarding_name']}: {selected_user.get('firstname', '')} {selected_user.get('lastname', '')} ({selected_user.get('email', expected_email)})")
                 user_data_map[qr_data['onboarding_name']] = selected_user
             else:
-                print(f"⚠ No user found for {qr_data['onboarding_name']} (expected email: {expected_email})")
+                print(f"⚠ Geen gebruiker gevonden voor {qr_data['onboarding_name']} (verwachte email: {expected_email})")
                 # Add to import file for manual processing
                 import_data.append({
                     'firstname': firstname,
@@ -491,21 +492,22 @@ class OnboardingQRManager:
                 self.tenant_data['domain'],
                 self.tenant_data['tenant_id'],
                 user_data_map,
-                whatsapp_url
+                whatsapp_url,
+                language
             )
-            print(f"✓ Generated multi-page guest PDF: {filename}")
-            print(f"✓ Contains {len(onboarding_qrs)} guest QR pages")
+            print(f"✓ Multi-page gast PDF gegenereerd: {filename}")
+            print(f"✓ Bevat {len(onboarding_qrs)} gast QR pagina's")
             if whatsapp_url:
                 print(f"✓ WhatsApp QR code toegevoegd")
             
         except Exception as e:
-            print(f"✗ Error generating multi-page guest QR PDF: {e}")
+            print(f"✗ Fout bij genereren multi-page gast QR PDF: {e}")
         
         # Create import file if needed
         if import_data:
             self.create_import_file(import_data)
-            print(f"⚠ Created import file for {len(import_data)} missing users")
-            print("Please fill in the user data and run the process again when ready")
+            print(f"⚠ Import bestand aangemaakt voor {len(import_data)} ontbrekende gebruikers")
+            print("Vul de gebruikersgegevens in en start het proces opnieuw zodra het klaar is")
         
         self.db.disconnect()
     
