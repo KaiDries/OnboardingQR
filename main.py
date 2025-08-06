@@ -163,21 +163,24 @@ class OnboardingQRManager:
                 if not self.find_tenant(slug):
                     return
                 
-                # Step 3: Ask for WhatsApp group
-                whatsapp_url = self.get_whatsapp_info()
+                # Step 3: Select language
+                language = self.get_language_selection()
                 
-                # Step 4: Get onboarding QRs
+                # Step 4: Ask for WhatsApp group
+                whatsapp_url = self.get_whatsapp_info(language)
+                
+                # Step 5: Get onboarding QRs
                 onboarding_qrs = self.get_onboarding_data()
                 if not onboarding_qrs:
                     self.logger.warning("No onboarding QRs found for tenant")
                     print(self.ERROR_MESSAGES['no_qrs'])
                     return
                 
-                # Step 5: Display onboarding options
+                # Step 6: Display onboarding options
                 self.display_onboarding_options(onboarding_qrs)
                 
-                # Step 6: Choose template type
-                self.choose_template_type(onboarding_qrs, whatsapp_url)
+                # Step 7: Choose template type
+                self.choose_template_type(onboarding_qrs, whatsapp_url, language)
                 
         except KeyboardInterrupt:
             self.logger.info("Process interrupted by user")
@@ -323,25 +326,57 @@ class OnboardingQRManager:
         
         return True
     
-    def get_whatsapp_info(self) -> Optional[str]:
-        """Ask for WhatsApp group information"""
-        print(f"\n=== WhatsApp Groep Configuratie ===")
+    def get_language_selection(self) -> str:
+        """Ask for language selection"""
+        from config import SUPPORTED_LANGUAGES
+        
+        print(f"\n=== Language Selection ===")
+        print("Available languages:")
+        
+        # Display available languages
+        for i, (code, name) in enumerate(SUPPORTED_LANGUAGES.items(), 1):
+            print(f"{i}. {name} ({code})")
         
         while True:
-            has_whatsapp = input("Is er een WhatsApp groep voor dit event? (j/n): ").strip().lower()
-            if has_whatsapp in ['j', 'ja', 'y', 'yes']:
-                whatsapp_url = input("Voer de WhatsApp groep link in: ").strip()
+            try:
+                choice = int(input("\nSelect language (1-" + str(len(SUPPORTED_LANGUAGES)) + "): "))
+                if 1 <= choice <= len(SUPPORTED_LANGUAGES):
+                    # Convert choice to language code
+                    language_code = list(SUPPORTED_LANGUAGES.keys())[choice - 1]
+                    language_name = SUPPORTED_LANGUAGES[language_code]
+                    print(f"✓ Selected language: {language_name}")
+                    return language_code
+                print(f"Please enter a number between 1 and {len(SUPPORTED_LANGUAGES)}")
+            except ValueError:
+                print("Please enter a valid number")
+    
+    def get_whatsapp_info(self, language: str = 'en') -> Optional[str]:
+        """Ask for WhatsApp group information"""
+        from config import TRANSLATIONS
+        
+        translations = TRANSLATIONS.get(language, TRANSLATIONS['en'])
+        
+        print(f"\n=== {translations['whatsapp_group']} ===")
+        
+        while True:
+            has_whatsapp = input(f"{translations['has_whatsapp']} ").strip().lower()
+            yes_options = [opt.lower() for opt in translations['yes_options']]
+            no_options = [opt.lower() for opt in translations['no_options']]
+            
+            if has_whatsapp in yes_options:
+                whatsapp_url = input(f"{translations['enter_whatsapp']} ").strip()
                 if whatsapp_url:
-                    print(f"✓ WhatsApp groep ingesteld: {whatsapp_url}")
+                    print(f"✓ {translations['whatsapp_set']} {whatsapp_url}")
                     return whatsapp_url
                 else:
                     print("Geen WhatsApp link opgegeven")
                     return None
-            elif has_whatsapp in ['n', 'nee', 'no']:
-                print("✓ Geen WhatsApp groep geconfigureerd")
+            elif has_whatsapp in no_options:
+                print(f"✓ {translations['no_whatsapp']}")
                 return None
             else:
-                print("Voer 'j' voor ja of 'n' voor nee in")
+                valid_options = translations['yes_options'] + translations['no_options']
+                print(f"Please enter one of: {', '.join(valid_options)}")
     
 
 

@@ -12,6 +12,16 @@ class QRCodeGenerator:
     def __init__(self):
         self.qr_size = 200
         self.template_dir = "templates"
+        
+    def get_translation(self, key: str, language: str = 'en') -> str:
+        """Get translation for a key in the specified language"""
+        from config import TRANSLATIONS
+        
+        # Use the specified language or fall back to English if not available
+        translations = TRANSLATIONS.get(language, TRANSLATIONS['en'])
+        
+        # Return the translation for the key or the key itself if not found
+        return translations.get(key, key)
     
     def _map_to_central_tenant_id(self, tenant_id: str) -> str:
         """Map tenant ID from local database format to central database format"""
