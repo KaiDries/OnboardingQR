@@ -499,7 +499,7 @@ class QRCodeGenerator:
         if onboarding_data['event_name']:
             # Bold label
             canvas_obj.setFont("Helvetica-Bold", 13)
-            canvas_obj.drawCentredString(info_center_x, info_y, "Event:")
+            canvas_obj.drawCentredString(info_center_x, info_y, f"{self.get_translation('event', language)}:")
             info_y -= 18
             # Answer on new line
             canvas_obj.setFont("Helvetica", 12)
@@ -509,7 +509,7 @@ class QRCodeGenerator:
         if onboarding_data['location_name']:
             # Bold label
             canvas_obj.setFont("Helvetica-Bold", 13)
-            canvas_obj.drawCentredString(info_center_x, info_y, "Locatie:")
+            canvas_obj.drawCentredString(info_center_x, info_y, f"{self.get_translation('location', language)}:")
             info_y -= 18
             # Answer on new line
             canvas_obj.setFont("Helvetica", 12)
@@ -527,10 +527,10 @@ class QRCodeGenerator:
             info_y -= 28  # Extra spacing between sections
         
         # Display roles from database or fallback text
-        roles_text = onboarding_data.get('rollen') or "Geen rollen gespecifieerd"
+        roles_text = onboarding_data.get('rollen') or self.get_translation('no_roles_specified', language)
         # Bold label
         canvas_obj.setFont("Helvetica-Bold", 13)
-        canvas_obj.drawCentredString(info_center_x, info_y, "Rollen:")
+        canvas_obj.drawCentredString(info_center_x, info_y, f"{self.get_translation('roles', language)}:")
         info_y -= 18
         # Answer on new line
         canvas_obj.setFont("Helvetica", 12)
@@ -1142,7 +1142,7 @@ class QRCodeGenerator:
         # Main title - compact
         canvas_obj.setFillColor("#FFFFFF")
         canvas_obj.setFont("Helvetica-Bold", 18)
-        canvas_obj.drawCentredString(width/2, height - 30, "CONFIGURATIE OVERZICHT")
+        canvas_obj.drawCentredString(width/2, height - 30, self.get_translation('configuration_overview', language))
         
         # Client name and template type on one line
         canvas_obj.setFont("Helvetica-Bold", 12)
@@ -1169,7 +1169,7 @@ class QRCodeGenerator:
             # Event naam EXTRA GROOT en prominenter
             canvas_obj.setFont("Helvetica-Bold", 26)  # Nog groter: 26pt
             canvas_obj.setFillColor(color)
-            canvas_obj.drawCentredString(width/2, y_pos, f"EVENT: {event_name}")
+            canvas_obj.drawCentredString(width/2, y_pos, f"{self.get_translation('event_label', language)} {event_name}")
             
             # Event times - veel meer zichtbaar
             try:
@@ -1194,9 +1194,9 @@ class QRCodeGenerator:
                                 start_formatted = start_dt.strftime("%d/%m/%Y %H:%M")
                             else:
                                 start_formatted = start_time.strftime("%d/%m/%Y %H:%M")
-                            time_info += f"Start: {start_formatted}"
+                            time_info += f"{self.get_translation('start_label', language)} {start_formatted}"
                         except:
-                            time_info += f"Start: {start_time}"
+                            time_info += f"{self.get_translation('start_label', language)} {start_time}"
                     
                     if end_time:
                         try:
@@ -1206,14 +1206,14 @@ class QRCodeGenerator:
                             else:
                                 end_formatted = end_time.strftime("%d/%m/%Y %H:%M")
                             if time_info:
-                                time_info += f"  |  Einde: {end_formatted}"
+                                time_info += f"  |  {self.get_translation('end_label', language)} {end_formatted}"
                             else:
-                                time_info += f"Einde: {end_formatted}"
+                                time_info += f"{self.get_translation('end_label', language)} {end_formatted}"
                         except:
                             if time_info:
-                                time_info += f"  |  Einde: {end_time}"
+                                time_info += f"  |  {self.get_translation('end_label', language)} {end_time}"
                             else:
-                                time_info += f"Einde: {end_time}"
+                                time_info += f"{self.get_translation('end_label', language)} {end_time}"
                     
                     if time_info:
                         canvas_obj.drawCentredString(width/2, y_pos, time_info)
@@ -1244,12 +1244,12 @@ class QRCodeGenerator:
                                 
                                 refund_info = ""
                                 if refund_start:
-                                    refund_info += f"Refund Start: {refund_start}"
+                                    refund_info += f"{self.get_translation('refund_start_label', language)} {refund_start}"
                                 if refund_end:
                                     if refund_info:
-                                        refund_info += f"  |  Refund Einde: {refund_end}"
+                                        refund_info += f"  |  {self.get_translation('refund_end_label', language)} {refund_end}"
                                     else:
-                                        refund_info += f"Refund Einde: {refund_end}"
+                                        refund_info += f"{self.get_translation('refund_end_label', language)} {refund_end}"
                                 
                                 if refund_info:
                                     canvas_obj.drawCentredString(width/2, y_pos, refund_info)
@@ -1269,7 +1269,7 @@ class QRCodeGenerator:
             y_pos -= 40  # Meer ruimte voor totaal configuraties
             canvas_obj.setFont("Helvetica-Bold", 18)  # Grotere font voor totaal
             canvas_obj.setFillColor(color)
-            canvas_obj.drawCentredString(width/2, y_pos, f"TOTAAL CONFIGURATIES: {config_count}")
+            canvas_obj.drawCentredString(width/2, y_pos, f"{self.get_translation('total_configurations', language)} {config_count}")
         
         # Table section - Gecentreerde tabel met flexibele kolommen
         y_pos -= 50  # Meer ruimte tussen event info en tabel
@@ -1289,12 +1289,12 @@ class QRCodeGenerator:
             col5_x = table_start_x + 330 # Location (90px)
             col6_x = table_start_x + 420 # Status (100px)
             
-            canvas_obj.drawString(col1_x, y_pos, "NAAM")
-            canvas_obj.drawString(col2_x, y_pos, "GEBRUIKER")
-            canvas_obj.drawString(col3_x, y_pos, "ROLLEN")
-            canvas_obj.drawString(col4_x, y_pos, "BETALING")
-            canvas_obj.drawString(col5_x, y_pos, "LOCATIE")
-            canvas_obj.drawString(col6_x, y_pos, "STATUS")
+            canvas_obj.drawString(col1_x, y_pos, self.get_translation('name_header', language))
+            canvas_obj.drawString(col2_x, y_pos, self.get_translation('user_header', language))
+            canvas_obj.drawString(col3_x, y_pos, self.get_translation('roles_header', language))
+            canvas_obj.drawString(col4_x, y_pos, self.get_translation('payment_header', language))
+            canvas_obj.drawString(col5_x, y_pos, self.get_translation('location_header', language))
+            canvas_obj.drawString(col6_x, y_pos, self.get_translation('status_header', language))
         else:
             # Application template - smallere tabel (450px) gecentreerd
             table_width = 450
@@ -1306,11 +1306,11 @@ class QRCodeGenerator:
             col4_x = table_start_x + 300 # Location (80px)
             col5_x = table_start_x + 380 # Status (70px)
             
-            canvas_obj.drawString(col1_x, y_pos, "NAAM")
-            canvas_obj.drawString(col2_x, y_pos, "ROLLEN")
-            canvas_obj.drawString(col3_x, y_pos, "BETALING")
-            canvas_obj.drawString(col4_x, y_pos, "LOCATIE")
-            canvas_obj.drawString(col5_x, y_pos, "STATUS")
+            canvas_obj.drawString(col1_x, y_pos, self.get_translation('name_header', language))
+            canvas_obj.drawString(col2_x, y_pos, self.get_translation('roles_header', language))
+            canvas_obj.drawString(col3_x, y_pos, self.get_translation('payment_header', language))
+            canvas_obj.drawString(col4_x, y_pos, self.get_translation('location_header', language))
+            canvas_obj.drawString(col5_x, y_pos, self.get_translation('status_header', language))
         
         # Header underline - gecentreerd op tabel
         canvas_obj.setStrokeColor("#CCCCCC")

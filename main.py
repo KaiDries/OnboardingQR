@@ -64,6 +64,7 @@ class OnboardingQRManager:
         self.db = None
         self.qr_gen = None
         self.tenant_data: Optional[Dict[str, Any]] = None
+        self.current_language = 'nl'  # Default language
         
         # Import constants
         from config import APP_NAME, SUCCESS_MESSAGES, ERROR_MESSAGES, IMPORT_FILE_NAME
@@ -73,6 +74,26 @@ class OnboardingQRManager:
         self.IMPORT_FILE_NAME = IMPORT_FILE_NAME
         
         self.logger.info(f"Initialized {self.APP_NAME} v{__version__}")
+    
+    def get_translation(self, key: str, language: str = None, **kwargs) -> str:
+        """Get translation for given key and language with fallback to Dutch"""
+        if language is None:
+            language = self.current_language
+            
+        from config import TRANSLATIONS
+        
+        # Get the translation with fallback to Dutch, then English
+        translation = TRANSLATIONS.get(language, {}).get(key) or \
+                     TRANSLATIONS.get('nl', {}).get(key) or \
+                     TRANSLATIONS.get('en', {}).get(key, key)
+        
+        # Format the translation with any provided kwargs
+        if kwargs:
+            try:
+                return translation.format(**kwargs)
+            except (KeyError, ValueError):
+                return translation
+        return translation
     
     def initialize_modules(self):
         """Initialize database and QR generator modules after cache clearing"""
@@ -114,12 +135,12 @@ class OnboardingQRManager:
                     importlib.reload(sys.modules['database'])
                 
                 self.logger.info("Python cache cleared and modules reloaded")
-                print("✓ Python cache cleared and modules reloaded")
+                print(f"✓ {self.get_translation('cache_cleared')}")
                 
         except Exception as e:
             self.logger.warning(f"Cache clearing encountered an issue: {e}")
-            print(f"Warning: Cache clearing encountered an issue: {e}")
-            print("This won't affect functionality, continuing...")
+            print(f"{self.get_translation('cache_warning')}: {e}")
+            print(self.get_translation('cache_continue'))
     
     def start_process(self) -> None:
         """Main process flow with comprehensive error handling"""
@@ -135,28 +156,28 @@ class OnboardingQRManager:
                 self.initialize_modules()
                 
                 # Test database connectivity before proceeding
-                print("Testing database connectivity...")
+                print(self.get_translation('testing_db'))
                 if not self.db.test_network_connectivity():
-                    print("\n⚠ DATABASE CONNECTIVITY ISSUE DETECTED")
-                    print("The application may not function properly due to network issues.")
-                    print("Possible solutions:")
-                    print("1. Check your internet connection")
-                    print("2. Ensure VPN is connected (if required)")
-                    print("3. Check if AWS RDS is accessible from your location")
-                    print("4. Contact your network administrator")
+                    print(f"\n⚠ {self.get_translation('db_issue_detected')}")
+                    print(self.get_translation('db_issue_message'))
+                    print(f"{self.get_translation('possible_solutions')}:")
+                    print(self.get_translation('check_internet'))
+                    print(self.get_translation('check_vpn'))
+                    print(self.get_translation('check_aws'))
+                    print(self.get_translation('contact_admin'))
                     
-                    continue_anyway = input("\nDo you want to continue anyway? (y/n): ").strip().lower()
-                    if continue_anyway not in ['y', 'yes', 'j', 'ja']:
-                        print("Operation cancelled due to connectivity issues")
+                    continue_anyway = input(f"\n{self.get_translation('continue_anyway')} ").strip().lower()
+                    if continue_anyway not in ['y', 'yes', 'j', 'ja', 's', 'si', 'sí', 'o', 'oui']:
+                        print(self.get_translation('operation_cancelled'))
                         return
                     else:
-                        print("⚠ Continuing with limited functionality...")
+                        print(f"⚠ {self.get_translation('continuing_limited')}")
                 
                 # Step 1: Get tenant slug
-                slug = input("Enter the tenant slug: ").strip()
+                slug = input(f"{self.get_translation('enter_tenant_slug')} ").strip()
                 if not slug:
                     self.logger.error("No tenant slug provided")
-                    print("Error: Tenant slug is required")
+                    print(self.get_translation('tenant_slug_required'))
                     return
                 
                 # Step 2: Find tenant
@@ -165,6 +186,7 @@ class OnboardingQRManager:
                 
                 # Step 3: Select language
                 language = self.get_language_selection()
+                self.current_language = language  # Store selected language
                 
                 # Step 4: Ask for WhatsApp group
                 whatsapp_url = self.get_whatsapp_info(language)
@@ -184,10 +206,10 @@ class OnboardingQRManager:
                 
         except KeyboardInterrupt:
             self.logger.info("Process interrupted by user")
-            print("\n\nProcess interrupted by user")
+            print(f"\n\n{self.get_translation('process_interrupted')}")
         except Exception as e:
             self.logger.error(f"Unexpected error in main process: {e}", exc_info=True)
-            print(f"\nUnexpected error: {e}")
+            print(f"\n{self.get_translation('unexpected_error')}: {e}")
         finally:
             if self.db:
                 self.db.disconnect()
@@ -195,45 +217,45 @@ class OnboardingQRManager:
     
     def find_tenant(self, slug: str) -> bool:
         """Find and validate tenant with fallback options"""
-        print(f"Searching for tenant with slug: {slug}")
+        print(f"{self.get_translation('searching_tenant')}: {slug}")
         
         tenant = self.db.find_tenant_by_slug(slug)
         
         if tenant:
             self.tenant_data = tenant
-            print(f"✓ Domain found: {tenant['domain']}")
-            print(f"✓ Tenant ID: {tenant['tenant_id']}")
+            print(f"✓ {self.get_translation('domain_found')}: {tenant['domain']}")
+            print(f"✓ {self.get_translation('tenant_id_found')}: {tenant['tenant_id']}")
             
             # Create tenant variable format
             from utils import get_tenant_variable_name
             tenant_var = get_tenant_variable_name(tenant['tenant_id'])
-            print(f"✓ Tenant variable: {tenant_var}")
+            print(f"✓ {self.get_translation('tenant_variable')}: {tenant_var}")
             
             return True
         
         # No exact match found - show partial matches and options
-        print(f"⚠ No exact match found for slug '{slug}'")
+        print(f"⚠ {self.get_translation('no_exact_match')} '{slug}'")
         
         # Search for partial matches
         partial_matches = self.db.find_partial_tenants(slug)
         
         if partial_matches:
-            print(f"\nFound {len(partial_matches)} similar tenant(s):")
+            print(f"\n{self.get_translation('similar_tenants', count=len(partial_matches))}")
             for i, match in enumerate(partial_matches[:10], 1):  # Show max 10 matches
                 print(f"{i}. {match['tenant_id']} -> {match['domain']}")
             
-            print("\nOptions:")
+            print(f"\n{self.get_translation('select_option')}:")
             for i, match in enumerate(partial_matches[:10], 1):
                 print(f"{i}. Use '{match['tenant_id']}'")
-            print("9. Manual tenant setup")
-            print("0. Cancel")
+            print(f"9. {self.get_translation('manual_tenant_setup')}")
+            print(f"0. {self.get_translation('cancel')}")
             
             while True:
                 try:
-                    choice = input(f"\nSelect option (1-{min(len(partial_matches), 10)}, 9, or 0): ").strip()
+                    choice = input(f"\n{self.get_translation('select_option')} (1-{min(len(partial_matches), 10)}, 9, or 0): ").strip()
                     
                     if choice == "0":
-                        print("Operation cancelled")
+                        print(self.get_translation('operation_cancelled_user'))
                         self.db.disconnect()
                         return False
                     elif choice == "9":
@@ -248,23 +270,23 @@ class OnboardingQRManager:
                             # Create tenant variable format
                             from utils import get_tenant_variable_name
                             tenant_var = get_tenant_variable_name(selected_tenant['tenant_id'])
-                            print(f"✓ Tenant variable: {tenant_var}")
+                            print(f"✓ {self.get_translation('tenant_variable')}: {tenant_var}")
                             
                             return True
                         else:
                             print(f"Please enter a number between 1 and {min(len(partial_matches), 10)}, 9, or 0")
                 except ValueError:
-                    print("Please enter a valid number")
+                    print(self.get_translation('enter_valid_number'))
         else:
-            print(f"No similar tenants found for '{slug}'")
-            print("\nOptions:")
-            print("9. Manual tenant setup")
-            print("0. Cancel")
+            print(f"{self.get_translation('no_similar_tenants')} '{slug}'")
+            print(f"\n{self.get_translation('select_option')}:")
+            print(f"9. {self.get_translation('manual_tenant_setup')}")
+            print(f"0. {self.get_translation('cancel')}")
             
             while True:
-                choice = input("\nSelect option (9 or 0): ").strip()
+                choice = input(f"\n{self.get_translation('select_option')} (9 or 0): ").strip()
                 if choice == "0":
-                    print("Operation cancelled")
+                    print(self.get_translation('operation_cancelled_user'))
                     self.db.disconnect()
                     return False
                 elif choice == "9":
@@ -274,26 +296,26 @@ class OnboardingQRManager:
     
     def manual_tenant_setup(self) -> bool:
         """Allow manual tenant setup when slug is not found"""
-        print("\n=== Manual Tenant Setup ===")
-        print("Please provide the tenant information manually:")
+        print(f"\n=== {self.get_translation('manual_setup_header')} ===")
+        print(self.get_translation('provide_tenant_info'))
         
         while True:
-            tenant_id = input("Enter tenant ID: ").strip()
+            tenant_id = input(f"{self.get_translation('enter_tenant_id')} ").strip()
             if tenant_id:
                 break
-            print("Tenant ID is required")
+            print(self.get_translation('tenant_id_required'))
         
         while True:
-            domain = input("Enter domain (e.g., summercamp-2025.com): ").strip()
+            domain = input(f"{self.get_translation('enter_domain')} ").strip()
             if domain:
                 # If domain doesn't contain a dot, suggest adding .com
                 if '.' not in domain:
                     suggested_domain = f"{domain}.com"
-                    use_suggestion = input(f"Domain '{domain}' seems incomplete. Use '{suggested_domain}' instead? (y/n): ").strip().lower()
-                    if use_suggestion in ['y', 'yes', 'j', 'ja']:
+                    use_suggestion = input(self.get_translation('domain_incomplete', domain=domain, suggested=suggested_domain) + " ").strip().lower()
+                    if use_suggestion in ['y', 'yes', 'j', 'ja', 's', 'si', 'sí', 'o', 'oui']:
                         domain = suggested_domain
                 break
-            print("Domain is required")
+            print(self.get_translation('domain_required'))
         
         # Create manual tenant data
         self.tenant_data = {
@@ -301,28 +323,28 @@ class OnboardingQRManager:
             'domain': domain
         }
         
-        print(f"✓ Manual tenant setup complete:")
-        print(f"✓ Tenant ID: {tenant_id}")
-        print(f"✓ Domain: {domain}")
+        print(f"✓ {self.get_translation('manual_setup_complete')}")
+        print(f"✓ {self.get_translation('tenant_id_found')}: {tenant_id}")
+        print(f"✓ {self.get_translation('domain_found')}: {domain}")
         
         # Create tenant variable format
         from utils import get_tenant_variable_name
         tenant_var = get_tenant_variable_name(tenant_id)
-        print(f"✓ Tenant variable: {tenant_var}")
+        print(f"✓ {self.get_translation('tenant_variable')}: {tenant_var}")
         
         # Verify that the tenant database exists
         tenant_db = f"tenant-{tenant_id}"
         if not self.db.connect(tenant_db):
-            print(f"⚠ Warning: Could not connect to tenant database '{tenant_db}'")
-            print("This may cause issues when retrieving onboarding QRs")
+            print(f"⚠ {self.get_translation('db_warning')} '{tenant_db}'")
+            print(self.get_translation('db_warning_message'))
             
-            continue_anyway = input("Continue anyway? (y/n): ").strip().lower()
-            if continue_anyway not in ['y', 'yes', 'j', 'ja']:
-                print("Operation cancelled")
+            continue_anyway = input(f"{self.get_translation('continue_anyway_question')} ").strip().lower()
+            if continue_anyway not in ['y', 'yes', 'j', 'ja', 's', 'si', 'sí', 'o', 'oui']:
+                print(self.get_translation('operation_cancelled_user'))
                 self.db.disconnect()
                 return False
         else:
-            print(f"✓ Tenant database '{tenant_db}' is accessible")
+            print(f"✓ {self.get_translation('db_accessible', db=tenant_db)}")
         
         return True
     
@@ -330,8 +352,8 @@ class OnboardingQRManager:
         """Ask for language selection"""
         from config import SUPPORTED_LANGUAGES
         
-        print(f"\n=== Language Selection ===")
-        print("Available languages:")
+        print(f"\n=== {self.get_translation('language_selection')} ===")
+        print(f"{self.get_translation('available_languages')}:")
         
         # Display available languages
         for i, (code, name) in enumerate(SUPPORTED_LANGUAGES.items(), 1):
@@ -339,16 +361,16 @@ class OnboardingQRManager:
         
         while True:
             try:
-                choice = int(input("\nSelect language (1-" + str(len(SUPPORTED_LANGUAGES)) + "): "))
+                choice = int(input(f"\n{self.get_translation('select_language')} (1-" + str(len(SUPPORTED_LANGUAGES)) + "): "))
                 if 1 <= choice <= len(SUPPORTED_LANGUAGES):
                     # Convert choice to language code
                     language_code = list(SUPPORTED_LANGUAGES.keys())[choice - 1]
                     language_name = SUPPORTED_LANGUAGES[language_code]
-                    print(f"✓ Selected language: {language_name}")
+                    print(f"✓ {self.get_translation('selected_language')}: {language_name}")
                     return language_code
                 print(f"Please enter a number between 1 and {len(SUPPORTED_LANGUAGES)}")
             except ValueError:
-                print("Please enter a valid number")
+                print(self.get_translation('enter_valid_number'))
     
     def get_whatsapp_info(self, language: str = 'en') -> Optional[str]:
         """Ask for WhatsApp group information"""
@@ -369,7 +391,7 @@ class OnboardingQRManager:
                     print(f"✓ {translations['whatsapp_set']} {whatsapp_url}")
                     return whatsapp_url
                 else:
-                    print("Geen WhatsApp link opgegeven")
+                    print(self.get_translation('no_whatsapp_link', language))
                     return None
             elif has_whatsapp in no_options:
                 print(f"✓ {translations['no_whatsapp']}")
@@ -382,47 +404,47 @@ class OnboardingQRManager:
 
     def get_onboarding_data(self) -> List[Dict[str, Any]]:
         """Retrieve onboarding QR data for tenant"""
-        print(f"\nRetrieving onboarding QRs for tenant {self.tenant_data['tenant_id']}...")
+        print(f"\n{self.get_translation('retrieving_qrs')} {self.tenant_data['tenant_id']}...")
         
         onboarding_qrs = self.db.get_onboarding_qrs(self.tenant_data['tenant_id'])
         
         if onboarding_qrs:
-            print(f"✓ Found {len(onboarding_qrs)} onboarding QR(s)")
+            print(f"✓ {self.get_translation('qrs_found', count=len(onboarding_qrs))}")
         
         return onboarding_qrs
     
     def display_onboarding_options(self, onboarding_qrs: List[Dict[str, Any]]):
         """Display available onboarding options"""
-        print("\n=== Available Onboarding QRs ===")
+        print(f"\n=== {self.get_translation('available_qrs')} ===")
         for i, qr in enumerate(onboarding_qrs, 1):
             print(f"{i}. {qr['onboarding_name']}")
             if qr['location_name']:
-                print(f"   Location: {qr['location_name']}")
+                print(f"   {self.get_translation('location')}: {qr['location_name']}")
             if qr['sales_name']:
-                print(f"   Sales: {qr['sales_name']}")
+                print(f"   {self.get_translation('sales')}: {qr['sales_name']}")
             if qr['event_name']:
-                print(f"   Event: {qr['event_name']}")
+                print(f"   {self.get_translation('event')}: {qr['event_name']}")
             if qr.get('rollen'):
-                print(f"   Rollen: {qr['rollen']}")
+                print(f"   {self.get_translation('roles')}: {qr['rollen']}")
             if qr.get('betaalmethodes'):
-                print(f"   Betaalmethodes: {qr['betaalmethodes']}")
-            print(f"   QR Code: {qr['qr_code']}")
+                print(f"   {self.get_translation('payment_methods')}: {qr['betaalmethodes']}")
+            print(f"   {self.get_translation('qr_code')}: {qr['qr_code']}")
             print()
     
     def choose_template_type(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
         """Kies template type en genereer QR codes"""
-        print("=== Template Opties ===")
-        print("1. Applicatie Onboarding QR")
-        print("2. Gast Gebruiker Onboarding QR")
+        print(f"=== {self.get_translation('template_options')} ===")
+        print(self.get_translation('app_onboarding_qr'))
+        print(self.get_translation('guest_onboarding_qr'))
         
         while True:
             try:
-                choice = int(input("\nSelecteer template type (1 of 2): "))
+                choice = int(input(f"\n{self.get_translation('select_template')} "))
                 if choice in [1, 2]:
                     break
-                print("Voer 1 of 2 in")
+                print(self.get_translation('enter_1_or_2'))
             except ValueError:
-                print("Voer een geldig nummer in")
+                print(self.get_translation('enter_valid_number'))
         
         if choice == 1:
             self.generate_application_qrs(onboarding_qrs, whatsapp_url, language)
@@ -431,7 +453,7 @@ class OnboardingQRManager:
     
     def generate_application_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
         """Genereer applicatie onboarding QR codes"""
-        print("\nGenereren van Applicatie Onboarding QR codes...")
+        print(f"\n{self.get_translation('generating_app_qrs')}")
         
         try:
             # Generate single multi-page PDF
@@ -442,20 +464,20 @@ class OnboardingQRManager:
                 whatsapp_url,
                 language=language
             )
-            print(f"✓ Multi-page PDF gegenereerd: {filename}")
-            print(f"✓ Bevat {len(onboarding_qrs)} onboarding QR pagina's")
+            print(f"✓ {self.get_translation('multipage_pdf_generated')}: {filename}")
+            print(f"✓ {self.get_translation('contains_pages', count=len(onboarding_qrs))}")
             if whatsapp_url:
-                print(f"✓ WhatsApp QR code toegevoegd")
+                print(f"✓ {self.get_translation('whatsapp_qr_added')}")
             
         except Exception as e:
-            print(f"✗ Fout bij genereren multi-page QR PDF: {e}")
+            print(f"✗ {self.get_translation('error_generating_pdf')}: {e}")
         
         self.db.disconnect()
     
     def generate_guest_qrs(self, onboarding_qrs: List[Dict[str, Any]], whatsapp_url: Optional[str] = None, language: str = 'en'):
         """Genereer gast gebruiker onboarding QR codes"""
-        print("\nGenereren van Gast Gebruiker Onboarding QR codes...")
-        print("Zoeken naar gebruikersgegevens op basis van onboarding namen...")
+        print(f"\n{self.get_translation('generating_guest_qrs')}")
+        print(self.get_translation('searching_user_data'))
         
         user_data_map = {}
         import_data = []
@@ -474,10 +496,10 @@ class OnboardingQRManager:
             if users:
                 # Use only the FIRST user found - één user per onboarding QR
                 selected_user = users[0]
-                print(f"✓ Gebruiker gevonden voor {qr_data['onboarding_name']}: {selected_user.get('firstname', '')} {selected_user.get('lastname', '')} ({selected_user.get('email', expected_email)})")
+                print(f"✓ {self.get_translation('user_found')} {qr_data['onboarding_name']}: {selected_user.get('firstname', '')} {selected_user.get('lastname', '')} ({selected_user.get('email', expected_email)})")
                 user_data_map[qr_data['onboarding_name']] = selected_user
             else:
-                print(f"⚠ Geen gebruiker gevonden voor {qr_data['onboarding_name']} (verwachte email: {expected_email})")
+                print(f"⚠ {self.get_translation('no_user_found')} {qr_data['onboarding_name']} ({self.get_translation('expected_email')}: {expected_email})")
                 # Add to import file for manual processing
                 import_data.append({
                     'firstname': firstname,
@@ -495,19 +517,19 @@ class OnboardingQRManager:
                 whatsapp_url,
                 language
             )
-            print(f"✓ Multi-page gast PDF gegenereerd: {filename}")
-            print(f"✓ Bevat {len(onboarding_qrs)} gast QR pagina's")
+            print(f"✓ {self.get_translation('multipage_guest_pdf')}: {filename}")
+            print(f"✓ {self.get_translation('guest_qr_pages', count=len(onboarding_qrs))}")
             if whatsapp_url:
-                print(f"✓ WhatsApp QR code toegevoegd")
+                print(f"✓ {self.get_translation('whatsapp_qr_added')}")
             
         except Exception as e:
-            print(f"✗ Fout bij genereren multi-page gast QR PDF: {e}")
+            print(f"✗ {self.get_translation('error_generating_guest_pdf')}: {e}")
         
         # Create import file if needed
         if import_data:
             self.create_import_file(import_data)
-            print(f"⚠ Import bestand aangemaakt voor {len(import_data)} ontbrekende gebruikers")
-            print("Vul de gebruikersgegevens in en start het proces opnieuw zodra het klaar is")
+            print(f"⚠ {self.get_translation('import_file_created', count=len(import_data))}")
+            print(self.get_translation('fill_user_data'))
         
         self.db.disconnect()
     
@@ -531,8 +553,8 @@ class OnboardingQRManager:
                 }
                 writer.writerow(filtered_row)
         
-        print(f"✓ Created import file: {filename}")
-        print("Please fill in the missing user information and save the file")
+        print(f"✓ {self.get_translation('import_file_generated')}: {filename}")
+        print(self.get_translation('fill_missing_info'))
 
 def main():
     """Main entry point with comprehensive error handling and version info"""
@@ -548,15 +570,15 @@ def main():
         manager.start_process()
         
     except KeyboardInterrupt:
-        print("\n\nProcess interrupted by user")
+        print(f"\n\n{manager.get_translation('process_interrupted') if 'manager' in locals() else 'Process interrupted by user'}")
         sys.exit(0)
     except ImportError as e:
-        print(f"\nMissing dependency: {e}")
-        print("Please run: pip install -r requirements.txt")
+        print(f"\n{manager.get_translation('missing_dependency') if 'manager' in locals() else 'Missing dependency'}: {e}")
+        print(manager.get_translation('install_requirements') if 'manager' in locals() else "Please run: pip install -r requirements.txt")
         sys.exit(1)
     except Exception as e:
-        print(f"\nCritical error: {e}")
-        print("Please check your configuration and try again")
+        print(f"\n{manager.get_translation('critical_error') if 'manager' in locals() else 'Critical error'}: {e}")
+        print(manager.get_translation('check_config') if 'manager' in locals() else "Please check your configuration and try again")
         sys.exit(1)
 
 if __name__ == "__main__":
