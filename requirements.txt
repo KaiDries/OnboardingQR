@@ -1,0 +1,25 @@
+# AnyKrowd Onboarding QR Generator - Dependencies
+# Professional QR code generator with PDF templates
+# Version: 1.0.0
+
+# Database connectivity
+mysql-connector-python==8.2.0
+
+# QR code generation and image processing  
+qrcode[pil]==7.4.2
+Pillow>=10.4.0  # Updated for Python 3.13 compatibility
+
+# PDF generation and layout
+reportlab==4.0.7
+
+# Environment configuration
+python-dotenv==1.0.0
+
+# Type hints support (Python 3.8+ compatibility)
+typing-extensions>=4.5.0
+
+# Development tools (optional - uncomment if needed)
+# black>=23.0.0              # Code formatting
+# mypy>=1.3.0                # Type checking
+# pytest>=7.3.0              # Testing framework
+# flake8>=6.0.0              # Linting
