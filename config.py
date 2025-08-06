@@ -1,74 +1,83 @@
-"""
-Configuration file for AnyKrowd Onboarding QR Generator
-"""
-
-# Application Information
+﻿# Application Information
 APP_NAME = "AnyKrowd Onboarding QR Generator"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "AnyKrowd Development Team"
 
-# QR Code Settings
-QR_CODE_SIZE = 140  # Size in pixels for main QR codes
-QR_CODE_BORDER = 6  # Border padding around QR codes
-WHATSAPP_QR_SIZE = 80  # Size for WhatsApp QR codes
-
-# PDF Layout Settings
-PDF_WIDTH = 595.27  # A4 width in points
-PDF_HEIGHT = 841.89  # A4 height in points
-PDF_MARGIN = 70  # Standard margin
-
-# Colors (Hex format)
-COLORS = {
-    'application_primary': '#1E3A8A',  # Blue for application template
-    'guest_primary': '#6A1B9A',       # Purple for guest template
-    'whatsapp_green': '#25D366',       # WhatsApp official green
-    'text_primary': '#000000',         # Black for main text
-    'text_secondary': '#666666',       # Gray for secondary text
-    'text_muted': '#999999'            # Light gray for page numbers
+# Multi-language Support
+SUPPORTED_LANGUAGES = {
+    'nl': 'Nederlands',
+    'en': 'English', 
+    'fr': 'Français',
+    'es': 'Español'
 }
 
-# Font Settings
-FONTS = {
-    'title': ('Helvetica-Bold', 32),
-    'subtitle': ('Helvetica-Bold', 20),
-    'header': ('Helvetica-Bold', 18),
-    'body': ('Helvetica', 14),
-    'small': ('Helvetica', 12),
-    'tiny': ('Helvetica', 10)
-}
-
-# Database Settings (defaults - override with environment variables)
-DATABASE_DEFAULTS = {
-    'host': 'localhost',
-    'port': 3306,
-    'charset': 'utf8mb4'
-}
-
-# File Settings
-OUTPUT_DIRECTORY = "output"
-TEMP_DIRECTORY = "temp"
-IMPORT_FILE_NAME = "missing_users_import.csv"
-TOPUP_MANUAL_IMAGE = "TOPUPMANUAL.png"
-
-# Template Settings
-TEMPLATES = {
-    'application': {
-        'name': 'Application Onboarding QR',
-        'description': 'Voor kassa/terminal configuratie',
-        'instructions_count': 7,
-        'supports_topup': True
+# Translations for templates
+TRANSLATIONS = {
+    'en': {
+        'configuration_overview': 'CONFIGURATION OVERVIEW',
+        'user_overview': 'USER OVERVIEW',
+        'page': 'Page',
+        'of': 'of',
+        'user_configuration': 'USER CONFIGURATION',
+        'currency_configuration': 'CURRENCY CONFIGURATION',
+        'topup_manual': 'TOP-UP MANUAL',
+        'whatsapp_group': 'WhatsApp Group Configuration',
+        'has_whatsapp': 'Is there a WhatsApp group for this event? (y/n):',
+        'enter_whatsapp': 'Enter the WhatsApp group link:',
+        'whatsapp_set': 'WhatsApp group set:',
+        'no_whatsapp': 'No WhatsApp group configured',
+        'yes_options': ['y', 'yes'],
+        'no_options': ['n', 'no']
     },
-    'guest': {
-        'name': 'Guest User Onboarding QR', 
-        'description': 'Voor gebruiker-specifieke configuratie',
-        'instructions_count': 5,
-        'dual_qr': True,
-        'supports_topup': True
+    'nl': {
+        'configuration_overview': 'CONFIGURATIE OVERZICHT',
+        'user_overview': 'GEBRUIKERS OVERZICHT',
+        'page': 'Pagina',
+        'of': 'van',
+        'user_configuration': 'GEBRUIKER CONFIGURATIE',
+        'currency_configuration': 'VALUTA CONFIGURATIE',
+        'topup_manual': 'OPWAARDEREN HANDLEIDING',
+        'whatsapp_group': 'WhatsApp Groep Configuratie',
+        'has_whatsapp': 'Is er een WhatsApp groep voor dit event? (j/n):',
+        'enter_whatsapp': 'Voer de WhatsApp groep link in:',
+        'whatsapp_set': 'WhatsApp groep ingesteld:',
+        'no_whatsapp': 'Geen WhatsApp groep geconfigureerd',
+        'yes_options': ['j', 'ja'],
+        'no_options': ['n', 'nee']
+    },
+    'fr': {
+        'configuration_overview': 'APERÇU DE CONFIGURATION',
+        'user_overview': 'APERÇU DES UTILISATEURS',
+        'page': 'Page',
+        'of': 'de',
+        'user_configuration': 'CONFIGURATION UTILISATEUR',
+        'currency_configuration': 'CONFIGURATION DE DEVISE',
+        'topup_manual': 'MANUEL DE RECHARGE',
+        'whatsapp_group': 'Configuration du Groupe WhatsApp',
+        'has_whatsapp': 'Y a-t-il un groupe WhatsApp pour cet événement? (o/n):',
+        'enter_whatsapp': 'Entrez le lien du groupe WhatsApp:',
+        'whatsapp_set': 'Groupe WhatsApp configuré:',
+        'no_whatsapp': 'Pas de groupe WhatsApp configuré',
+        'yes_options': ['o', 'oui'],
+        'no_options': ['n', 'non']
+    },
+    'es': {
+        'configuration_overview': 'RESUMEN DE CONFIGURACIÓN',
+        'user_overview': 'RESUMEN DE USUARIOS',
+        'page': 'Página',
+        'of': 'de',
+        'user_configuration': 'CONFIGURACIÓN DE USUARIO',
+        'currency_configuration': 'CONFIGURACIÓN DE MONEDA',
+        'topup_manual': 'MANUAL DE RECARGA',
+        'whatsapp_group': 'Configuración del Grupo WhatsApp',
+        'has_whatsapp': '¿Hay un grupo de WhatsApp para este evento? (s/n):',
+        'enter_whatsapp': 'Introduce el enlace del grupo WhatsApp:',
+        'whatsapp_set': 'Grupo WhatsApp configurado:',
+        'no_whatsapp': 'No hay grupo WhatsApp configurado',
+        'yes_options': ['s', 'si', 'sí'],
+        'no_options': ['n', 'no']
     }
 }
-
-# URL Format
-QR_URL_FORMAT = "https://{domain}/?onboardingQrCode={qr_code}#/auth/signuphome"
 
 # Error Messages
 ERROR_MESSAGES = {
@@ -80,9 +89,12 @@ ERROR_MESSAGES = {
 
 # Success Messages
 SUCCESS_MESSAGES = {
-    'tenant_found': "✓ Tenant gevonden en gevalideerd",
-    'qrs_loaded': "✓ Onboarding QR codes geladen", 
-    'pdf_generated': "✓ PDF succesvol gegenereerd",
-    'whatsapp_added': "✓ WhatsApp QR code toegevoegd",
-    'cache_cleared': "✓ Cache opgeschoond"
+    'tenant_found': " Tenant gevonden en gevalideerd",
+    'qrs_loaded': " Onboarding QR codes geladen", 
+    'pdf_generated': " PDF succesvol gegenereerd",
+    'whatsapp_added': " WhatsApp QR code toegevoegd",
+    'cache_cleared': " Cache opgeschoond"
 }
+
+# File Settings
+IMPORT_FILE_NAME = "missing_users_import.csv"

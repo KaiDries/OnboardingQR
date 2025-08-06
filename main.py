@@ -343,6 +343,8 @@ class OnboardingQRManager:
             else:
                 print("Voer 'j' voor ja of 'n' voor nee in")
     
+
+
     def get_onboarding_data(self) -> List[Dict[str, Any]]:
         """Retrieve onboarding QR data for tenant"""
         print(f"\nRetrieving onboarding QRs for tenant {self.tenant_data['tenant_id']}...")
@@ -522,3 +524,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

@@ -45,7 +45,7 @@ class QRCodeGenerator:
         
         return qr_img
     
-    def generate_multi_page_application_template(self, onboarding_list: List[Dict[str, Any]], domain: str, tenant_name: str, whatsapp_url: str = None) -> str:
+    def generate_multi_page_application_template(self, onboarding_list: List[Dict[str, Any]], domain: str, tenant_name: str, whatsapp_url: str = None, language: str = 'en') -> str:
         """Generate a single multi-page PDF for all application onboarding QR codes"""
         filename = f"onboarding_app_{tenant_name}_all.pdf"
         c = canvas.Canvas(filename, pagesize=A4)
@@ -56,26 +56,26 @@ class QRCodeGenerator:
         
         # Page 1: Configuration Overview (table format) - ALLEEN deze pagina
         page_count += 1
-        self._draw_configuration_overview_page(c, onboarding_list, tenant_name, domain, width, height, page_count, total_pages, "APPLICATION")
+        self._draw_configuration_overview_page(c, onboarding_list, tenant_name, domain, width, height, page_count, total_pages, "APPLICATION", None, language)
         
         # Page 2: Add separate currencies page if needed (directly after overview)
         if self._needs_separate_currencies_page(onboarding_list):
             page_count += 1
             c.showPage()  # Start new page for currencies
-            self._draw_currencies_page(c, tenant_name, domain, width, height, page_count, total_pages, "APPLICATION")
+            self._draw_currencies_page(c, tenant_name, domain, width, height, page_count, total_pages, "APPLICATION", language)
         
         for onboarding_data in onboarding_list or []:
             page_count += 1
             c.showPage()  # Start new page
             
             # Draw main onboarding page
-            self._draw_application_page(c, onboarding_data, domain, width, height, page_count, total_pages, tenant_name, whatsapp_url)
+            self._draw_application_page(c, onboarding_data, domain, width, height, page_count, total_pages, tenant_name, whatsapp_url, language)
             
             # Check if TOPUP role is present and add manual page
             if self._has_topup_role(onboarding_data):
                 page_count += 1
                 c.showPage()  # Start new page for TOPUP manual
-                self._draw_topup_manual_page(c, onboarding_data, width, height, page_count, total_pages, tenant_name)
+                self._draw_topup_manual_page(c, onboarding_data, width, height, page_count, total_pages, tenant_name, language)
         
         c.save()
         return filename
@@ -107,7 +107,7 @@ class QRCodeGenerator:
             return 'topup' in roles_lower or 'top_up' in roles_lower or 'top-up' in roles_lower
         return False
     
-    def _draw_application_page(self, canvas_obj, onboarding_data: Dict[str, Any], domain: str, width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None, whatsapp_url: str = None):
+    def _draw_application_page(self, canvas_obj, onboarding_data: Dict[str, Any], domain: str, width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None, whatsapp_url: str = None, language: str = 'en'):
         """Draw a single application onboarding page with clean, simple layout"""
         qr_url = self.generate_qr_url(domain, onboarding_data['qr_code'])
         qr_img = self.create_qr_code(qr_url, 200)
@@ -302,7 +302,7 @@ class QRCodeGenerator:
         if os.path.exists(qr_temp_path):
             os.remove(qr_temp_path)
     
-    def generate_multi_page_guest_template(self, onboarding_list: List[Dict[str, Any]], domain: str, tenant_name: str, user_data_map: Dict[str, Dict[str, Any]] = None, whatsapp_url: str = None) -> str:
+    def generate_multi_page_guest_template(self, onboarding_list: List[Dict[str, Any]], domain: str, tenant_name: str, user_data_map: Dict[str, Dict[str, Any]] = None, whatsapp_url: str = None, language: str = 'en') -> str:
         """Generate a single multi-page PDF for all guest user onboarding QR codes"""
         # Ensure onboarding_list is not None
         if onboarding_list is None:
@@ -317,20 +317,20 @@ class QRCodeGenerator:
         
         # Page 1: Configuration Overview (table format)
         page_count += 1
-        self._draw_configuration_overview_page(c, onboarding_list, tenant_name, domain, width, height, page_count, total_pages, "GUEST", user_data_map)
+        self._draw_configuration_overview_page(c, onboarding_list, tenant_name, domain, width, height, page_count, total_pages, "GUEST", user_data_map, language)
         
         # Page 2: Add separate currencies page if needed (directly after overview)
         if self._needs_separate_currencies_page(onboarding_list):
             page_count += 1
             c.showPage()  # Start new page for currencies
-            self._draw_currencies_page(c, tenant_name, domain, width, height, page_count, total_pages, "GUEST")
+            self._draw_currencies_page(c, tenant_name, domain, width, height, page_count, total_pages, "GUEST", language)
         
         for onboarding_data in onboarding_list or []:
             page_count += 1
             c.showPage()
             
             # Draw main guest page
-            self._draw_guest_page(c, onboarding_data, domain, width, height, page_count, total_pages, tenant_name, user_data_map, whatsapp_url)
+            self._draw_guest_page(c, onboarding_data, domain, width, height, page_count, total_pages, tenant_name, user_data_map, whatsapp_url, language)
             
             # Check if TOPUP role is present and add manual page
             if self._has_topup_role(onboarding_data):
@@ -368,7 +368,7 @@ class QRCodeGenerator:
         # This leaves enough space for proper layout
         return len(onboarding_list) > 15
     
-    def _draw_guest_page(self, canvas_obj, onboarding_data: Dict[str, Any], domain: str, width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None, user_data_map: Dict[str, Dict[str, Any]] = None, whatsapp_url: str = None):
+    def _draw_guest_page(self, canvas_obj, onboarding_data: Dict[str, Any], domain: str, width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None, user_data_map: Dict[str, Dict[str, Any]] = None, whatsapp_url: str = None, language: str = 'en'):
         """Draw a single guest onboarding page with same layout as application but 2 QR codes"""
         qr_url = self.generate_qr_url(domain, onboarding_data['qr_code'])
         qr_img = self.create_qr_code(qr_url, 140)  # Smaller QR code
@@ -689,7 +689,7 @@ class QRCodeGenerator:
             if os.path.exists(user_qr_temp_path):
                 os.remove(user_qr_temp_path)
     
-    def _draw_topup_manual_page(self, canvas_obj, onboarding_data: Dict[str, Any], width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None):
+    def _draw_topup_manual_page(self, canvas_obj, onboarding_data: Dict[str, Any], width: float, height: float, page_num: int, total_pages: int, tenant_name: str = None, language: str = 'en'):
         """Draw TOPUP manual page with optimized layout for better readability"""
         
         # Header section with background - same style as application pages
@@ -1121,7 +1121,7 @@ class QRCodeGenerator:
             canvas_obj.drawCentredString(x + size/2, y + size/2 + 3, "CODE")
             print(f"Error generating YouTube QR: {e}")
 
-    def _draw_configuration_overview_page(self, canvas_obj, onboarding_list: List[Dict[str, Any]], tenant_name: str, domain: str, width: float, height: float, page_num: int, total_pages: int, template_type: str, user_data_map: Dict[str, Dict[str, Any]] = None):
+    def _draw_configuration_overview_page(self, canvas_obj, onboarding_list: List[Dict[str, Any]], tenant_name: str, domain: str, width: float, height: float, page_num: int, total_pages: int, template_type: str, user_data_map: Dict[str, Dict[str, Any]] = None, language: str = 'en'):
         """Draw a compact configuration overview page showing all onboarding QRs on one page"""
         
         # Header section with background - extra compact header
@@ -1558,7 +1558,7 @@ class QRCodeGenerator:
         except Exception as e:
             print(f"Could not fetch currencies data: {e}")
     
-    def _draw_currencies_page(self, canvas_obj, tenant_name: str, domain: str, width: float, height: float, page_num: int, total_pages: int, template_type: str):
+    def _draw_currencies_page(self, canvas_obj, tenant_name: str, domain: str, width: float, height: float, page_num: int, total_pages: int, template_type: str, language: str = 'en'):
         """Draw a dedicated currencies page when there are too many onboardings"""
         
         # Header section with background
@@ -1719,3 +1719,11 @@ class QRCodeGenerator:
         current_time = datetime.now().strftime("%d/%m/%Y %H:%M")
         footer_text = f"anyKrowd NV - gegenereerd op: {current_time} - CLIENT: {tenant_name}"
         canvas_obj.drawCentredString(width/2, 30, footer_text)
+
+
+
+
+
+
+
+
